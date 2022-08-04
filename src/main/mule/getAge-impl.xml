@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="getAge-implSubFlow" doc:id="104eb783-573c-4957-936a-adf10c825547" >
+		<logger level="INFO" doc:name="getAge-implSubFlow start Logger" doc:id="4180fb86-e530-4bb4-af12-d37e0da8ab86" message="getAge-implSubFlow started"/>
+		<set-variable value="#[attributes.queryParams.DOB]" doc:name="Set Variable" doc:id="95acf033-cf60-4b4f-beb4-0ee90d73e194" variableName="Age"/>
+		<set-variable value="#[now() as Date]" doc:name="Set Variable" doc:id="03219e54-daa4-42f8-b359-212a35156d96" variableName="currentTime"/>
+		<ee:transform doc:name="Transform Message" doc:id="f2b4d9f4-1239-4eff-86f6-be26bead9a37" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Periods
+var DOB = vars.Age as Date {format: "yyyy-MM-dd"}
+var currentDate = (vars.currentTime as Date {format: "yyyy-MM-dd"})
+var PeriodOfTime = between(currentDate,DOB)
+var totalDays = daysBetween(DOB,currentDate)
+---
+{
+	"Age": (PeriodOfTime.years ++ " Years " ++ (if(PeriodOfTime.months as Number < 10) PeriodOfTime.months ++ " Month "  else PeriodOfTime.months ++ " Months ")
+            ++ PeriodOfTime.days ++ " Days"),
+    "years": PeriodOfTime.years ++ " Years",
+    "months": (PeriodOfTime.years * 12 + PeriodOfTime.months + if(PeriodOfTime.days as Number > 30) 1  else 0) ++ " Months" ,
+    "days": totalDays ++ " Days",
+    "Total Hours": (totalDays * 24) ++ " Hours",
+    "Total Minutes": (totalDays * 24 * 60) ++ " Minutes",
+    "Total Seconds": (totalDays * 24 * 60 * 60) ++ " Seconds"
+    
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="getAge-implSubFlow end Logger" doc:id="f7146177-159b-4f45-a42a-b5a38f4433d9" message="getAge-implSubFlow ended"/>
+	</sub-flow>
+</mule>
